@@ -1,0 +1,60 @@
+/* ==================== ÉTAPE 7 : CSS POUR LES DÉTAILS ==================== */
+
+/* Ligne sélectionnée */
+tr.selected-row {
+    background: rgba(234, 179, 8, 0.08) !important;
+}
+
+tr.selected-row td {
+    border-bottom-color: rgba(250, 204, 21, 0.4) !important;
+}
+
+/* Panneau de détails */
+.details-header {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    margin-bottom: 12px;
+}
+
+.details-title {
+    font-size: 16px;
+    font-weight: 600;
+    color: #e5e7eb;
+}
+
+.details-subtitle {
+    font-size: 12px;
+    color: #9ca3af;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+}
+
+.details-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 10px;
+}
+
+.details-card {
+    background: #05070d;
+    border-radius: 12px;
+    padding: 10px 12px;
+    border: 1px solid rgba(148, 163, 184, 0.25);
+}
+
+.details-label {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: #9ca3af;
+    margin-bottom: 4px;
+}
+
+.details-value {
+    font-size: 13px;
+    color: #e5e7eb;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}

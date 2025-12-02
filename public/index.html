@@ -1,0 +1,1186 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Arbitrade - Funding Rate & Price Arbitrage</title>
+    <style>
+        /* ==================== GLOBAL RESET ==================== */
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            background: #05070d;
+            color: #e5e7eb;
+            min-height: 100vh;
+        }
+
+        a {
+            color: inherit;
+            text-decoration: none;
+        }
+
+        button {
+            font-family: inherit;
+        }
+
+        /* ==================== HEADER / TOPBAR ==================== */
+        #topbar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            height: 70px;
+            padding: 0 32px;
+            background: #070b12;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        #logo {
+            font-size: 22px;
+            font-weight: 700;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            background: linear-gradient(135deg, #facc15, #fbbf24);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        #main-tabs {
+            display: flex;
+            gap: 8px;
+        }
+
+        .tab-button {
+            padding: 8px 16px;
+            border-radius: 9999px;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            border: 1px solid transparent;
+            background: transparent;
+            color: #9ca3af;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .tab-button:hover {
+            color: #e5e7eb;
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .tab-button.active {
+            background: linear-gradient(135deg, #facc15, #fbbf24);
+            color: #0a0a0a;
+            border-color: #facc15;
+            font-weight: 700;
+        }
+
+        #btn-refresh {
+            padding: 8px 20px;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            background: #facc15;
+            color: #0a0a0a;
+            border: none;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        #btn-refresh:hover {
+            background: #fbbf24;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(250, 204, 21, 0.3);
+        }
+
+        #last-update {
+            font-size: 12px;
+            color: #9ca3af;
+            margin-left: 16px;
+        }
+
+        /* ==================== LAYOUT PRINCIPAL ==================== */
+        #app-layout {
+            display: grid;
+            grid-template-columns: 260px 1fr;
+            gap: 16px;
+            padding: 16px 24px 32px 24px;
+            height: calc(100vh - 70px);
+            overflow: hidden;
+        }
+
+        /* ==================== SIDEBAR ==================== */
+        #sidebar {
+            background: #070b10;
+            border-radius: 12px;
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+            overflow-y: auto;
+        }
+
+        #sidebar::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        #sidebar::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        #sidebar::-webkit-scrollbar-thumb {
+            background: rgba(148, 163, 184, 0.2);
+            border-radius: 3px;
+        }
+
+        #sidebar::-webkit-scrollbar-thumb:hover {
+            background: rgba(148, 163, 184, 0.3);
+        }
+
+        /* Sections de la sidebar */
+        #market-overview h3,
+        #exchanges-list h3 {
+            font-size: 12px;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            color: #9ca3af;
+            margin-bottom: 12px;
+            font-weight: 600;
+        }
+
+        /* Market Overview Card */
+        .overview-card {
+            background: #05060a;
+            border-radius: 12px;
+            min-height: 80px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            padding: 16px;
+        }
+
+        .overview-label {
+            font-size: 10px;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: #6b7280;
+            margin-bottom: 8px;
+        }
+
+        .overview-value {
+            font-size: 24px;
+            font-weight: 700;
+            color: #facc15;
+        }
+
+        /* Exchange Toggle Buttons */
+        .exchange-toggle {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            width: 100%;
+            padding: 10px 12px;
+            margin-bottom: 6px;
+            border-radius: 10px;
+            background: #05060a;
+            color: #e5e7eb;
+            border: 1px solid transparent;
+            cursor: pointer;
+            font-size: 13px;
+            transition: background 0.15s ease, transform 0.1s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+        }
+
+        .exchange-toggle:hover {
+            background: #0b1020;
+            box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.3);
+            transform: translateX(2px);
+        }
+
+        .exchange-toggle.active {
+            background: linear-gradient(90deg, #0f172a, #1e293b);
+            border: 1px solid rgba(250, 204, 21, 0.4);
+            color: #facc15;
+            font-weight: 600;
+            text-shadow: 0 0 8px rgba(250, 204, 21, 0.3);
+        }
+
+        /* ==================== MAIN CONTENT ==================== */
+        #main-content {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            overflow-y: auto;
+        }
+
+        #main-content::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        #main-content::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        #main-content::-webkit-scrollbar-thumb {
+            background: rgba(148, 163, 184, 0.2);
+            border-radius: 4px;
+        }
+
+        #main-content::-webkit-scrollbar-thumb:hover {
+            background: rgba(148, 163, 184, 0.3);
+        }
+
+        /* Section Titles */
+        .section-title,
+        #funding-view>h2,
+        #price-view>h2 {
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: #d1d5db;
+            margin-bottom: 12px;
+            font-weight: 600;
+        }
+
+        /* ==================== TABLEAUX ==================== */
+        .table-container {
+            background: #070b12;
+            border-radius: 16px;
+            padding: 12px 16px 16px 16px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            overflow-x: auto;
+        }
+
+        .table-container::-webkit-scrollbar {
+            height: 8px;
+        }
+
+        .table-container::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .table-container::-webkit-scrollbar-thumb {
+            background: rgba(148, 163, 184, 0.2);
+            border-radius: 4px;
+        }
+
+        .table-container::-webkit-scrollbar-thumb:hover {
+            background: rgba(148, 163, 184, 0.3);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+        }
+
+        thead th {
+            padding: 10px 8px;
+            text-align: left;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            font-size: 11px;
+            font-weight: 600;
+            color: #9ca3af;
+            border-bottom: 1px solid rgba(148, 163, 184, 0.35);
+            position: relative;
+            background: transparent;
+        }
+
+        tbody td {
+            padding: 10px 8px;
+            border-bottom: 1px solid rgba(15, 23, 42, 0.9);
+            color: #e5e7eb;
+        }
+
+        tbody tr {
+            transition: background 0.15s ease;
+            cursor: pointer;
+        }
+
+        tbody tr:hover {
+            background: rgba(15, 23, 42, 0.7);
+        }
+
+        /* Strategy column styling */
+        tbody td[data-strategy] {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+
+        /* ==================== PANNEAUX DE DÉTAILS ==================== */
+        #funding-details-panel,
+        #price-details-panel {
+            margin-top: 16px;
+            background: #05070d;
+            border-radius: 16px;
+            border: 1px dashed rgba(148, 163, 184, 0.4);
+            min-height: 120px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #6b7280;
+            font-size: 13px;
+            padding: 20px;
+        }
+
+        #funding-details-panel:empty::before {
+            content: "Select a pair to view detailed funding data.";
+        }
+
+        #price-details-panel:empty::before {
+            content: "Select a pair to view detailed price arbitrage data.";
+        }
+
+        /* ==================== UTILITY CLASSES ==================== */
+
+        /* Visibility */
+        .hidden {
+            display: none;
+        }
+
+        /* Text colors for LONG/SHORT */
+        .text-long {
+            color: #4ade80;
+            font-weight: 500;
+        }
+
+        .text-short {
+            color: #f97373;
+            font-weight: 500;
+        }
+
+        /* Sortable headers (for future use) */
+        .sortable-header {
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .sortable-header:hover {
+            color: #d1d5db;
+        }
+
+        .sort-indicator {
+            font-size: 10px;
+            margin-left: 4px;
+            opacity: 0.7;
+        }
+
+        /* Affiliate links (for future use) */
+        .affiliate-link {
+            display: inline-block;
+            padding: 2px 6px;
+            border-radius: 6px;
+            background: transparent;
+            transition: background 0.15s ease, box-shadow 0.15s ease, transform 0.1s ease;
+            cursor: pointer;
+        }
+
+        .affiliate-link:hover {
+            background: rgba(250, 204, 21, 0.15);
+            box-shadow: 0 0 0 1px rgba(250, 204, 21, 0.45);
+            transform: translateY(-0.5px);
+        }
+
+        /* APR/Spread badges (for future use) */
+        .apr-badge,
+        .spread-badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 6px;
+            font-weight: 600;
+            font-size: 12px;
+        }
+
+        .apr-badge {
+            background: linear-gradient(135deg, rgba(74, 222, 128, 0.15), rgba(34, 197, 94, 0.15));
+            color: #4ade80;
+            border: 1px solid rgba(74, 222, 128, 0.3);
+            text-shadow: 0 0 8px rgba(250, 204, 21, 0.3);
+        }
+
+        /* ==================== MAIN CONTENT ==================== */
+        #main-content {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            overflow-y: auto;
+        }
+
+        #main-content::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        #main-content::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        #main-content::-webkit-scrollbar-thumb {
+            background: rgba(148, 163, 184, 0.2);
+            border-radius: 4px;
+        }
+
+        #main-content::-webkit-scrollbar-thumb:hover {
+            background: rgba(148, 163, 184, 0.3);
+        }
+
+        /* Section Titles */
+        .section-title,
+        #funding-view>h2,
+        #price-view>h2 {
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: #d1d5db;
+            margin-bottom: 12px;
+            font-weight: 600;
+        }
+
+        /* ==================== TABLEAUX ==================== */
+        .table-container {
+            background: #070b12;
+            border-radius: 16px;
+            padding: 12px 16px 16px 16px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            overflow-x: auto;
+        }
+
+        .table-container::-webkit-scrollbar {
+            height: 8px;
+        }
+
+        .table-container::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .table-container::-webkit-scrollbar-thumb {
+            background: rgba(148, 163, 184, 0.2);
+            border-radius: 4px;
+        }
+
+        .table-container::-webkit-scrollbar-thumb:hover {
+            background: rgba(148, 163, 184, 0.3);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+        }
+
+        thead th {
+            padding: 10px 8px;
+            text-align: left;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            font-size: 11px;
+            font-weight: 600;
+            color: #9ca3af;
+            border-bottom: 1px solid rgba(148, 163, 184, 0.35);
+            position: relative;
+            background: transparent;
+        }
+
+        tbody td {
+            padding: 10px 8px;
+            border-bottom: 1px solid rgba(15, 23, 42, 0.9);
+            color: #e5e7eb;
+        }
+
+        tbody tr {
+            transition: background 0.15s ease;
+            cursor: pointer;
+        }
+
+        tbody tr:hover {
+            background: rgba(15, 23, 42, 0.7);
+        }
+
+        /* Strategy column styling */
+        tbody td[data-strategy] {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+
+        /* ==================== PANNEAUX DE DÉTAILS ==================== */
+        #funding-details-panel,
+        #price-details-panel {
+            margin-top: 16px;
+            background: #05070d;
+            border-radius: 16px;
+            border: 1px dashed rgba(148, 163, 184, 0.4);
+            min-height: 120px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #6b7280;
+            font-size: 13px;
+            padding: 20px;
+        }
+
+        #funding-details-panel:empty::before {
+            content: "Select a pair to view detailed funding data.";
+        }
+
+        #price-details-panel:empty::before {
+            content: "Select a pair to view detailed price arbitrage data.";
+        }
+
+        /* ==================== UTILITY CLASSES ==================== */
+
+        /* Visibility */
+        .hidden {
+            display: none;
+        }
+
+        /* Text colors for LONG/SHORT */
+        .text-long {
+            color: #4ade80;
+            font-weight: 500;
+        }
+
+        .text-short {
+            color: #f97373;
+            font-weight: 500;
+        }
+
+        /* Sortable headers (for future use) */
+        .sortable-header {
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .sortable-header:hover {
+            color: #d1d5db;
+        }
+
+        .sort-indicator {
+            font-size: 10px;
+            margin-left: 4px;
+            opacity: 0.7;
+        }
+
+        /* Affiliate links (for future use) */
+        .affiliate-link {
+            display: inline-block;
+            padding: 2px 6px;
+            border-radius: 6px;
+            background: transparent;
+            transition: background 0.15s ease, box-shadow 0.15s ease, transform 0.1s ease;
+            cursor: pointer;
+        }
+
+        .affiliate-link:hover {
+            background: rgba(250, 204, 21, 0.15);
+            box-shadow: 0 0 0 1px rgba(250, 204, 21, 0.45);
+            transform: translateY(-0.5px);
+        }
+
+        /* APR/Spread badges (for future use) */
+        .apr-badge,
+        .spread-badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 6px;
+            font-weight: 600;
+            font-size: 12px;
+        }
+
+        .apr-badge {
+            background: linear-gradient(135deg, rgba(74, 222, 128, 0.15), rgba(34, 197, 94, 0.15));
+            color: #4ade80;
+            border: 1px solid rgba(74, 222, 128, 0.3);
+        }
+
+        .spread-badge {
+            background: linear-gradient(135deg, rgba(147, 197, 253, 0.15), rgba(96, 165, 250, 0.15));
+            color: #93c5fd;
+            border: 1px solid rgba(147, 197, 253, 0.3);
+        }
+
+        /* ==================== SKELETON LOADING ==================== */
+        .skeleton-row td {
+            position: relative;
+            overflow: hidden;
+            color: transparent !important;
+        }
+
+        .skeleton-cell {
+            display: block;
+            width: 100%;
+            height: 10px;
+            border-radius: 9999px;
+            background: linear-gradient(90deg,
+                    rgba(30, 41, 59, 0.9),
+                    rgba(51, 65, 85, 0.9),
+                    rgba(30, 41, 59, 0.9));
+            background-size: 200% 100%;
+            animation: skeleton-shimmer 1.2s ease-in-out infinite;
+        }
+
+        @keyframes skeleton-shimmer {
+            0% {
+                background-position: -200% 0;
+            }
+
+            100% {
+                background-position: 200% 0;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- TOPBAR / HEADER -->
+    <header id="topbar">
+        <div id="logo">ARBITRADE</div>
+
+        <div id="main-tabs">
+            <button id="tab-funding" class="tab-button" data-tab="funding">FUNDING OPPORTUNITIES</button>
+            <button id="tab-price" class="tab-button" data-tab="price">PRICE ARBITRAGE</button>
+        </div>
+
+        <button id="btn-refresh">REFRESH</button>
+
+        <div id="last-update">Last update: --:--:--</div>
+    </header>
+
+    <!-- LAYOUT PRINCIPAL -->
+    <div id="app-layout">
+
+        <!-- SIDEBAR -->
+        <aside id="sidebar">
+
+            <!-- MARKET OVERVIEW -->
+            <section id="market-overview">
+                <h3>Market Overview</h3>
+                <div class="overview-card">
+                    <div class="overview-label">TOTAL PAIRS</div>
+                    <div class="overview-value">--</div>
+                </div>
+            </section>
+
+            <!-- EXCHANGES LIST -->
+            <section id="exchanges-list">
+                <h3>Exchanges</h3>
+                <button class="exchange-toggle" data-exchange="paradex">Paradex</button>
+                <button class="exchange-toggle" data-exchange="vest">Vest</button>
+                <button class="exchange-toggle" data-exchange="extended">Extended</button>
+                <button class="exchange-toggle" data-exchange="hyperliquid">Hyperliquid</button>
+                <button class="exchange-toggle" data-exchange="lighter">Lighter</button>
+                <button class="exchange-toggle" data-exchange="hibachi">Hibachi</button>
+                <button class="exchange-toggle" data-exchange="aster">Aster</button>
+                <button class="exchange-toggle" data-exchange="pacifica">Pacifica</button>
+                <button class="exchange-toggle" data-exchange="variational">Variational</button>
+            </section>
+
+        </aside>
+
+        <!-- CONTENU PRINCIPAL -->
+        <main id="main-content">
+
+            <!-- SECTION FUNDING -->
+            <section id="funding-view">
+                <h2>LIVE FUNDING OPPORTUNITIES</h2>
+
+                <div class="table-container">
+                    <table id="funding-table">
+                        <thead>
+                            <tr>
+                                <th>Pair</th>
+                                <th>APR</th>
+                                <th>Strategy</th>
+                                <th>Paradex</th>
+                                <th>Vest</th>
+                                <th>Extended</th>
+                                <th>Hyperliquid</th>
+                                <th>Lighter</th>
+                                <th>Hibachi</th>
+                                <th>Aster</th>
+                                <th>Pacifica</th>
+                                <th>Variational</th>
+                            </tr>
+                        </thead>
+                        <tbody id="funding-table-body">
+                            <!-- Lignes de données seront ajoutées plus tard via JS -->
+                        </tbody>
+                    </table>
+                </div>
+
+                <div id="funding-details-panel">
+                    <!-- Contenu détaillé (graphique, stats) sera ajouté dans une autre étape -->
+                </div>
+            </section>
+
+            <!-- SECTION PRICE ARBITRAGE -->
+            <section id="price-view" class="hidden">
+                <h2>PRICE ARBITRAGE OPPORTUNITIES</h2>
+
+                <div class="table-container">
+                    <table id="price-table">
+                        <thead>
+                            <tr>
+                                <th>Pair</th>
+                                <th>Spread</th>
+                                <th>Strategy</th>
+                                <th>Paradex</th>
+                                <th>Vest</th>
+                                <th>Extended</th>
+                                <th>Hyperliquid</th>
+                                <th>Lighter</th>
+                                <th>Hibachi</th>
+                                <th>Aster</th>
+                                <th>Pacifica</th>
+                                <th>Variational</th>
+                            </tr>
+                        </thead>
+                        <tbody id="price-table-body">
+                            <!-- Lignes de données seront ajoutées plus tard via JS -->
+                        </tbody>
+                    </table>
+                </div>
+
+                <div id="price-details-panel">
+                    <!-- Contenu détaillé sera ajouté plus tard -->
+                </div>
+            </section>
+
+        </main>
+
+    </div>
+
+    <!-- JAVASCRIPT -->
+    <script>
+        // ==================== CONFIGURATION ====================
+        const PAIRS = ["BTC-PERP", "ETH-PERP", "SOL-PERP", "DASH-PERP"];
+
+        // ==================== ÉTAT GLOBAL ====================
+        let activeTab = "funding"; // "funding" ou "price"
+
+        const selectedExchanges = {
+            paradex: true,
+            vest: true,
+            extended: true,
+            hyperliquid: true,
+            lighter: true,
+            hibachi: true,
+            aster: true,
+            pacifica: true,
+            variational: true
+        };
+
+        // ==================== SÉLECTION DES ÉLÉMENTS DU DOM ====================
+        const tabButtons = document.querySelectorAll(".tab-button");
+        const fundingView = document.getElementById("funding-view");
+        const priceView = document.getElementById("price-view");
+        const exchangeToggles = document.querySelectorAll(".exchange-toggle");
+        const fundingTableBody = document.getElementById("funding-table-body");
+        const priceTableBody = document.getElementById("price-table-body");
+        const lastUpdateEl = document.getElementById("last-update");
+        const btnRefresh = document.getElementById("btn-refresh");
+
+        // ==================== SKELETON LOADING ====================
+        function showFundingSkeleton(rows = 5) {
+            if (!fundingTableBody) return;
+            fundingTableBody.innerHTML = "";
+
+            const columnsCount = 1 /* pair */ + 1 /* apr */ + 1 /* strategy */ + 9 /* exchanges */;
+            for (let i = 0; i < rows; i++) {
+                const tr = document.createElement("tr");
+                tr.classList.add("skeleton-row");
+
+                for (let c = 0; c < columnsCount; c++) {
+                    const td = document.createElement("td");
+                    const skeleton = document.createElement("div");
+                    skeleton.classList.add("skeleton-cell");
+                    td.appendChild(skeleton);
+                    tr.appendChild(td);
+                }
+
+                fundingTableBody.appendChild(tr);
+            }
+        }
+
+        function showPriceSkeleton(rows = 5) {
+            if (!priceTableBody) return;
+            priceTableBody.innerHTML = "";
+
+            const columnsCount = 1 /* pair */ + 1 /* spread */ + 1 /* strategy */ + 9 /* exchanges */;
+            for (let i = 0; i < rows; i++) {
+                const tr = document.createElement("tr");
+                tr.classList.add("skeleton-row");
+
+                for (let c = 0; c < columnsCount; c++) {
+                    const td = document.createElement("td");
+                    const skeleton = document.createElement("div");
+                    skeleton.classList.add("skeleton-cell");
+                    td.appendChild(skeleton);
+                    tr.appendChild(td);
+                }
+
+                priceTableBody.appendChild(tr);
+            }
+        }
+
+        // ==================== BACKEND DATA FETCHING ====================
+        async function fetchFundingDataForPair(pair) {
+            const res = await fetch(`/api/funding-compare?pair=${encodeURIComponent(pair)}`);
+            if (!res.ok) {
+                throw new Error(`Funding API error for ${pair}: ${res.status}`);
+            }
+            const json = await res.json();
+            if (!json || !json.success) {
+                throw new Error(`Funding API error for ${pair}: invalid response`);
+            }
+
+            const comparison = json.comparison;
+            const sorted = comparison.sorted || [];
+
+            // Construire la map exchanges -> fundingRate (%)
+            const exchanges = {};
+            sorted.forEach(entry => {
+                if (typeof entry.fundingRate === "number") {
+                    exchanges[entry.exchange] = entry.fundingRate * 100;
+                }
+            });
+
+            return {
+                pair: json.pair,
+                apr: comparison.apr || 0,
+                strategy: {
+                    long: comparison.highest ? comparison.highest.exchange : "",
+                    short: comparison.lowest ? comparison.lowest.exchange : ""
+                },
+                exchanges
+            };
+        }
+
+        async function fetchPriceDataForPair(pair) {
+            const res = await fetch(`/api/price-compare?pair=${encodeURIComponent(pair)}`);
+            if (!res.ok) {
+                throw new Error(`Price API error for ${pair}: ${res.status}`);
+            }
+            const json = await res.json();
+            if (!json || !json.success) {
+                throw new Error(`Price API error for ${pair}: invalid response`);
+            }
+
+            const comparison = json.comparison;
+            const raw = json.raw || [];
+
+            const exchanges = {};
+            raw.forEach(entry => {
+                if (entry && entry.exchange && entry.data && typeof entry.data.price === "number") {
+                    exchanges[entry.exchange] = entry.data.price;
+                }
+            });
+
+            return {
+                pair: json.pair,
+                spread: comparison.spreadPct || 0,
+                strategy: {
+                    long: comparison.best ? comparison.best.exchange : "",
+                    short: comparison.worst ? comparison.worst.exchange : ""
+                },
+                exchanges
+            };
+        }
+
+        async function loadFundingData() {
+            showFundingSkeleton(PAIRS.length);
+
+            const results = [];
+            for (const pair of PAIRS) {
+                try {
+                    const row = await fetchFundingDataForPair(pair);
+                    results.push(row);
+                } catch (err) {
+                    console.error("Error loading funding for pair", pair, err);
+                }
+            }
+
+            if (results.length > 0) {
+                renderFundingTable(results);
+            } else {
+                fundingTableBody.innerHTML = "<tr><td colspan='12' style='text-align:center; padding:20px; color:#9ca3af;'>No funding data available.</td></tr>";
+            }
+        }
+
+        async function loadPriceData() {
+            showPriceSkeleton(PAIRS.length);
+
+            const results = [];
+            for (const pair of PAIRS) {
+                try {
+                    const row = await fetchPriceDataForPair(pair);
+                    results.push(row);
+                } catch (err) {
+                    console.error("Error loading price for pair", pair, err);
+                }
+            }
+
+            if (results.length > 0) {
+                renderPriceTable(results);
+            } else {
+                priceTableBody.innerHTML = "<tr><td colspan='12' style='text-align:center; padding:20px; color:#9ca3af;'>No price data available.</td></tr>";
+            }
+        }
+
+        async function refreshAll() {
+            try {
+                updateLastUpdate();
+                await Promise.all([
+                    loadFundingData(),
+                    loadPriceData()
+                ]);
+            } catch (err) {
+                console.error("Error during refreshAll()", err);
+            }
+        }
+
+        // ==================== GESTION DES ONGLETS ====================
+        function setActiveTab(tab) {
+            activeTab = tab;
+
+            // Mettre à jour les classes CSS des boutons d'onglets
+            tabButtons.forEach(btn => {
+                const tabName = btn.dataset.tab;
+                if (tabName === tab) {
+                    btn.classList.add("active");
+                } else {
+                    btn.classList.remove("active");
+                }
+            });
+
+            // Afficher/masquer les vues
+            if (tab === "funding") {
+                fundingView.style.display = "block";
+                priceView.style.display = "none";
+            } else {
+                fundingView.style.display = "none";
+                priceView.style.display = "block";
+            }
+        }
+
+        // ==================== GESTION DE LA SIDEBAR ====================
+        function initializeSidebar() {
+            exchangeToggles.forEach(toggle => {
+                const exId = toggle.dataset.exchange;
+                if (!exId) return;
+
+                // État initial : actif
+                toggle.classList.add("active");
+
+                toggle.addEventListener("click", () => {
+                    const current = !!selectedExchanges[exId];
+                    const next = !current;
+                    selectedExchanges[exId] = next;
+
+                    if (next) {
+                        toggle.classList.add("active");
+                    } else {
+                        toggle.classList.remove("active");
+                    }
+
+                    // Re-render les tableaux
+                    // renderFundingTable(sampleFundingData); // No longer using sample data
+                    // renderPriceTable(samplePriceData); // No longer using sample data
+                    refreshAll(); // Refresh with real data
+                });
+            });
+        }
+
+        // ==================== RENDU DU TABLEAU FUNDING ====================
+        function renderFundingTable(data) {
+            if (!fundingTableBody) return;
+            fundingTableBody.innerHTML = "";
+
+            const exchangeOrder = [
+                "paradex",
+                "vest",
+                "extended",
+                "hyperliquid",
+                "lighter",
+                "hibachi",
+                "aster",
+                "pacifica",
+                "variational"
+            ];
+
+            data.forEach(row => {
+                const tr = document.createElement("tr");
+
+                // Colonne Pair
+                const tdPair = document.createElement("td");
+                tdPair.textContent = row.pair;
+                tr.appendChild(tdPair);
+
+                // Colonne APR
+                const tdApr = document.createElement("td");
+                tdApr.textContent = row.apr.toFixed(2) + " %";
+                tr.appendChild(tdApr);
+
+                // Colonne Strategy
+                const tdStrategy = document.createElement("td");
+                const longEl = document.createElement("div");
+                longEl.classList.add("text-long");
+                longEl.textContent = "LONG " + row.strategy.long;
+
+                const shortEl = document.createElement("div");
+                shortEl.classList.add("text-short");
+                shortEl.textContent = "SHORT " + row.strategy.short;
+
+                tdStrategy.appendChild(longEl);
+                tdStrategy.appendChild(shortEl);
+                tr.appendChild(tdStrategy);
+
+                // Colonnes par exchange
+                exchangeOrder.forEach(exId => {
+                    const td = document.createElement("td");
+                    const value = row.exchanges[exId];
+
+                    if (typeof value === "number") {
+                        td.textContent = value.toFixed(2) + " %";
+                    } else if (value === null || value === undefined) {
+                        td.textContent = "-";
+                    } else {
+                        td.textContent = String(value);
+                    }
+
+                    tr.appendChild(td);
+                });
+
+                fundingTableBody.appendChild(tr);
+            });
+        }
+
+        // ==================== RENDU DU TABLEAU PRICE ====================
+        function renderPriceTable(data) {
+            if (!priceTableBody) return;
+            priceTableBody.innerHTML = "";
+
+            const exchangeOrder = [
+                "paradex",
+                "vest",
+                "extended",
+                "hyperliquid",
+                "lighter",
+                "hibachi",
+                "aster",
+                "pacifica",
+                "variational"
+            ];
+
+            data.forEach(row => {
+                const tr = document.createElement("tr");
+
+                // Colonne Pair
+                const tdPair = document.createElement("td");
+                tdPair.textContent = row.pair;
+                tr.appendChild(tdPair);
+
+                // Colonne Spread
+                const tdSpread = document.createElement("td");
+                tdSpread.textContent = row.spread.toFixed(2) + " %";
+                tr.appendChild(tdSpread);
+
+                // Colonne Strategy
+                const tdStrategy = document.createElement("td");
+                const longEl = document.createElement("div");
+                longEl.classList.add("text-long");
+                longEl.textContent = "LONG " + row.strategy.long;
+
+                const shortEl = document.createElement("div");
+                shortEl.classList.add("text-short");
+                shortEl.textContent = "SHORT " + row.strategy.short;
+
+                tdStrategy.appendChild(longEl);
+                tdStrategy.appendChild(shortEl);
+                tr.appendChild(tdStrategy);
+
+                // Colonnes prix par exchange
+                exchangeOrder.forEach(exId => {
+                    const td = document.createElement("td");
+                    const value = row.exchanges[exId];
+
+                    if (typeof value === "number") {
+                        td.textContent = "$" + value.toLocaleString(undefined, {
+                            minimumFractionDigits: 2,
+                            maximumFractionDigits: 2
+                        });
+                    } else if (value === null || value === undefined) {
+                        td.textContent = "-";
+                    } else {
+                        td.textContent = String(value);
+                    }
+
+                    tr.appendChild(td);
+                });
+
+                priceTableBody.appendChild(tr);
+            });
+        }
+
+        // ==================== MISE À JOUR DU TIMESTAMP ====================
+        function updateLastUpdate() {
+            if (!lastUpdateEl) return;
+            const now = new Date();
+            const hh = String(now.getHours()).padStart(2, "0");
+            const mm = String(now.getMinutes()).padStart(2, "0");
+            const ss = String(now.getSeconds()).padStart(2, "0");
+            lastUpdateEl.textContent = `Last update: ${hh}:${mm}:${ss}`;
+        }
+
+        // ==================== INITIALISATION ====================
+        function init() {
+            // Initialiser les onglets
+            setActiveTab("funding");
+
+            // Ajouter les listeners sur les boutons d'onglets
+            tabButtons.forEach(btn => {
+                btn.addEventListener("click", () => {
+                    const tabName = btn.dataset.tab;
+                    if (tabName) {
+                        setActiveTab(tabName);
+                    }
+                });
+            });
+
+            // Initialiser la sidebar
+            initializeSidebar();
+
+            // Charger les données réelles depuis le backend
+            refreshAll();
+
+            // Ajouter le listener sur le bouton REFRESH
+            if (btnRefresh) {
+                btnRefresh.addEventListener("click", () => {
+                    refreshAll();
+                });
+            }
+        }
+
+        // Lancer l'initialisation au chargement de la page
+        if (document.readyState === "loading") {
+            document.addEventListener("DOMContentLoaded", init);
+        } else {
+            init();
+        }
+    </script>
+
+</body>
+
+</html>
