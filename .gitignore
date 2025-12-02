@@ -1,10 +1,5 @@
-node_modules/
-.env
-.env.local
+node_modules
 .vercel
-*.log
-npm-debug.log*
+.env
 .DS_Store
-dist/
-build/
-.cache/
+npm-debug.log
